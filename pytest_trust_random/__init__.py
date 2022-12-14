@@ -27,7 +27,10 @@ class JSONFile(pytest.File):
         self.model = model
     def collect(self):
         raw_p = self.model.parse_file(self.path)
-        return [JSONItem.from_parent(self, name=f"tiny_test{i}", spec = name) for i, name in enumerate(raw_p.tests.tiny_test)]
+        final_tests = []
+        for name, test in raw_p.tests:
+            final_tests += [JSONItem.from_parent(self, name=f"{name}{i}", spec = x) for i, x in enumerate(test)]
+        return final_tests
  
 def get_benchmarker_from_definition(file_path) -> AutoBenchmarker:
     import importlib.util
