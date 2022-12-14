@@ -40,6 +40,22 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "joblib"
+version = "1.2.0"
+description = "Lightweight pipelining with Python functions"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[[package]]
+name = "numpy"
+version = "1.23.5"
+description = "NumPy is the fundamental package for array computing with Python."
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[[package]]
 name = "packaging"
 version = "22.0"
 description = "Core utilities for Python packages"
@@ -113,13 +129,15 @@ python-versions = ">=3.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "c7e2f0e4128d4147453fb28b1c7884248af66b1e7b1628fd119b85fca93e7748"
+content-hash = "a95ebab207f633c9c37af0bd264d7a4de32462fe244ba9a3e74f8884db78d09b"
 
 [metadata.files]
 attrs = []
 colorama = []
 exceptiongroup = []
 iniconfig = []
+joblib = []
+numpy = []
 packaging = []
 pluggy = []
 pydantic = []
