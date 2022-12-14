@@ -1,7 +1,10 @@
 
+from typing import Optional, Type
 import pytest
 from pydantic import BaseModel
 from pathlib import Path
+from .definitions.auto_benchmarker import AutoBenchmarker
+from .definitions.pytest_config import PytestConfig
 
 class ExampleSubmodel(BaseModel):
     pop: int
@@ -15,14 +18,18 @@ class JSONItem(pytest.Item):
         self.spec = spec
 
     def runtest(self):
+        print(self.spec)
         assert self.spec.pop >=1
 
 class JSONFile(pytest.File):
+    def __init__(self, *, model: Type[BaseModel], **kwargs):
+        super().__init__(**kwargs)
+        self.model = model
     def collect(self):
-        raw_p = ExampleModel.parse_file(self.path)
-        return [JSONItem.from_parent(self, name=f"test{i}", spec = item) for i, item in enumerate(raw_p.tests)]
+        raw_p = self.model.parse_file(self.path)
+        return [JSONItem.from_parent(self, name=f"tiny_test{i}", spec = name) for i, name in enumerate(raw_p.tests.tiny_test)]
  
-def get_benchmarker_from_definition(file_path):
+def get_benchmarker_from_definition(file_path) -> AutoBenchmarker:
     import importlib.util
     import sys
     spec = importlib.util.spec_from_file_location("autobenchmarker", file_path)
@@ -31,21 +38,54 @@ def get_benchmarker_from_definition(file_path):
     sys.modules["autobenchmarker"] = autobench
     assert spec.loader is not None
     spec.loader.exec_module(autobench)
-
+    if not isinstance(autobench.trust_random, AutoBenchmarker):
+        raise ValueError('Benchmarker of incorrect type')
     return autobench.trust_random
 
-def pytest_collectstart(collector: pytest.Session):
-    print(collector.path)
+def get_benchmarker_from_startpath(start_path) -> Optional[AutoBenchmarker]:
+    # Generate benchmark from definition and settings
+    definition_path = Path(str(start_path) + '/' + 'benchmark_definition.py')
+    if not definition_path.exists():
+        return None
+    auto_benchmarker = get_benchmarker_from_definition(definition_path)
+    return auto_benchmarker
+
+def get_pytest_config_from_startpath(start_path) -> Optional[PytestConfig]:
+    config_path = Path(str(start_path) + '/' + 'pytest_config.json')
+    if config_path.exists():
+        return PytestConfig.parse_file(config_path)
+    else:
+        return None
+
+def pytest_sessionstart(session: pytest.Session):
+    pytest_config = get_pytest_config_from_startpath(session.startpath)
+    auto_benchmarker = get_benchmarker_from_startpath(session.startpath)
+    if not auto_benchmarker or not pytest_config:
+        raise ValueError('benchmark or pytest_config not found')
+    benchmark_path = Path(str(session.startpath) + '/' + pytest_config.benchmark_path)
+
+    # get addoption from collector and generate if specified
+    if not benchmark_path.exists():
+        auto_benchmarker.generate_benchmark()
+    else:
+        benchmark_sub_path = Path(str(benchmark_path) + '/' + 'benchmark.json')
+        if not benchmark_sub_path.exists():
+            auto_benchmarker.generate_benchmark()
+
 
 
 
 def pytest_collect_file(parent: pytest.Session, file_path: Path):
-    if file_path.suffix == ".json":
-        return JSONFile.from_parent(parent, path=file_path)
-    elif file_path.name == "benchmark_definition.py":
-        # parent.config is accessible - take note
+    if file_path.name == "benchmark.json":
+        auto_benchmarker = get_benchmarker_from_startpath(parent.startpath)
+        assert auto_benchmarker is not None
+        return JSONFile.from_parent(parent, path=file_path, model = auto_benchmarker.test_model)
 
-        trust_random = get_benchmarker_from_definition(file_path)
-        #trust_random.test_result()
-        #raise NotImplementedError()
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--generatebenchmark",
+        dest="genbenchmark",
+        action="store_true",
+        help="my option: type1 or type2",
+    )
