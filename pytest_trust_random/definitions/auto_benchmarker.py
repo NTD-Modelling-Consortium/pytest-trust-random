@@ -45,7 +45,7 @@ class BenchmarkArray(BaseModel):
 
     @classmethod
     def from_array(cls, array: Union[NDArray[np.float_], NDArray[np.int_]]):
-        return cls(mean=np.mean(array), st_dev=np.std(array))
+        return cls(mean=float(np.mean(array)), st_dev=float(np.std(array)))
 
 
 class BaseSettingsModel(BaseModel):
@@ -85,7 +85,7 @@ def get_test_pairs(
 ) -> Tuple[List[Tuple], float]:
     def get_exponentially_spaced_steps(
         start: Union[int, float], end: Union[int, float], n_steps: int
-    ) -> NDArray[np.float_]:
+    ) -> Union[NDArray[np.int_], NDArray[np.float_]]:
         log_start = math.log(start)
         log_end = math.log(end)
         exp_spaced = np.linspace(log_start, log_end, n_steps)
@@ -95,10 +95,11 @@ def get_test_pairs(
     for k, t in parameters.items():
         setting_item: BaseTestDimension = getattr(settings, k)
         if issubclass(t, int):
+            unrounded_spaces: Union[NDArray[np.int_], NDArray[np.float_], NDArray[Union[np.int_, np.float_]]] = get_exponentially_spaced_steps(
+                setting_item.minimum, setting_item.maximum, setting_item.steps
+            )
             spaces: Union[NDArray[np.int_], NDArray[np.float_]] = np.round(
-                get_exponentially_spaced_steps(
-                    setting_item.minimum, setting_item.maximum, setting_item.steps
-                )
+                unrounded_spaces #type:ignore
             )
         else:
             spaces: Union[
