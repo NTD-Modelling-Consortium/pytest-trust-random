@@ -3,7 +3,7 @@ from typing import Optional, Type
 import pytest
 from pydantic import BaseModel
 from pathlib import Path
-from .definitions.auto_benchmarker import AutoBenchmarker
+from .definitions.auto_benchmarker import AutoBenchmarker, BaseOutputData, BaseTestModel
 from .definitions.pytest_config import PytestConfig
 
 class ExampleSubmodel(BaseModel):
@@ -13,23 +13,34 @@ class ExampleModel(BaseModel):
     tests: list[ExampleSubmodel]
 
 class JSONItem(pytest.Item):
-    def __init__(self, *, spec: ExampleSubmodel, **kwargs):
+    def __init__(self, *, func_name: str, data: BaseOutputData, benchmarker: AutoBenchmarker, acceptable_st_devs: int, **kwargs):
         super().__init__(**kwargs)
-        self.spec = spec
+        self.benchmarker = benchmarker
+        self.data = data
+        self.func_name = func_name
+        self.acceptable_st_devs = acceptable_st_devs
 
     def runtest(self):
-        print(self.spec)
-        assert self.spec.pop >=1
+        self.benchmarker.test_benchmark_data(
+            benchmark_data=self.data,
+            acceptable_st_devs=self.acceptable_st_devs,
+            func_name=self.func_name,
+        )
+
 
 class JSONFile(pytest.File):
-    def __init__(self, *, model: Type[BaseModel], **kwargs):
+    model: Type[BaseTestModel]
+    def __init__(self, *, model: Type[BaseTestModel], benchmarker: AutoBenchmarker, acceptable_st_devs: int, **kwargs):
         super().__init__(**kwargs)
         self.model = model
+        self.benchmarker = benchmarker
+        self.acceptable_st_devs = acceptable_st_devs
+
     def collect(self):
-        raw_p = self.model.parse_file(self.path)
+        test_model = self.model.parse_file(self.path)
         final_tests = []
-        for name, test in raw_p.tests:
-            final_tests += [JSONItem.from_parent(self, name=f"{name}{i}", spec = x) for i, x in enumerate(test)]
+        for func_name, test in test_model.tests:
+            final_tests += [JSONItem.from_parent(self, name=f"{func_name}{i}", func_name = func_name, data = data, benchmarker = self.benchmarker, acceptable_st_devs = self.acceptable_st_devs) for i, data in enumerate(test)]
         return final_tests
  
 def get_benchmarker_from_definition(file_path) -> AutoBenchmarker:
@@ -81,8 +92,10 @@ def pytest_sessionstart(session: pytest.Session):
 def pytest_collect_file(parent: pytest.Session, file_path: Path):
     if file_path.name == "benchmark.json":
         auto_benchmarker = get_benchmarker_from_startpath(parent.startpath)
+        pytest_config = get_pytest_config_from_startpath(parent.startpath)
         assert auto_benchmarker is not None
-        return JSONFile.from_parent(parent, path=file_path, model = auto_benchmarker.test_model)
+        assert pytest_config is not None
+        return JSONFile.from_parent(parent, path=file_path, model = auto_benchmarker.test_model, benchmarker = auto_benchmarker, acceptable_st_devs = pytest_config.acceptable_st_devs)
 
 
 def pytest_addoption(parser):
