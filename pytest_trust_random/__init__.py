@@ -121,18 +121,22 @@ def pytest_sessionstart(session: pytest.Session):
 
 def pytest_collect_file(parent: pytest.Session, file_path: Path):
     if file_path.name == "benchmark.json":
-        auto_benchmarker = get_benchmarker_from_startpath(parent.startpath)
         pytest_config = get_pytest_config_from_startpath(parent.startpath)
-        assert auto_benchmarker is not None
         assert pytest_config is not None
-        return JSONFile.from_parent(
-            parent,
-            path=file_path,
-            model=auto_benchmarker.test_model,
-            benchmarker=auto_benchmarker,
-            acceptable_st_devs=pytest_config.acceptable_st_devs,
-            acceptable_re_runs=pytest_config.re_runs,
-        )
+        if (
+            str(file_path.relative_to(parent.startpath).parent)
+            == pytest_config.benchmark_path
+        ):
+            auto_benchmarker = get_benchmarker_from_startpath(parent.startpath)
+            assert auto_benchmarker is not None
+            return JSONFile.from_parent(
+                parent,
+                path=file_path,
+                model=auto_benchmarker.test_model,
+                benchmarker=auto_benchmarker,
+                acceptable_st_devs=pytest_config.acceptable_st_devs,
+                acceptable_re_runs=pytest_config.re_runs,
+            )
 
 
 def pytest_addoption(parser):
