@@ -5,6 +5,6 @@ class Stats(BaseModel):
     pop: int
 
 def tiny_test(pop: int, other: int) -> Stats:
-    return Stats(pop = 2*pop)
+    return Stats(pop = pop)
 
 trust_random = AutoBenchmarker(tiny_test = tiny_test)

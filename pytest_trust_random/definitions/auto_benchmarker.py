@@ -75,9 +75,10 @@ class BaseTestDimension(GenericModel, Generic[DataT]):
     maximum: DataT
     steps: int
 
+TestT = TypeVar("TestT", bound = BaseOutputData)
 
-class BaseTestModel(BaseModel):
-    pass
+class BaseTestModel(GenericModel, Generic[TestT]):
+    tests: List[TestT]
 
 
 def get_test_pairs(
