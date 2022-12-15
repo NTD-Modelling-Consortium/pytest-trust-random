@@ -3,8 +3,7 @@ from typing import Optional, Type
 import pytest
 from pydantic import BaseModel
 from pathlib import Path
-from .definitions.auto_benchmarker import AutoBenchmarker, BaseOutputData, BaseTestModel
-from .definitions.pytest_config import PytestConfig
+from .auto_benchmarker import AutoBenchmarker, BaseOutputData, BaseTestModel, PytestConfig
 
 class ExampleSubmodel(BaseModel):
     pop: int
