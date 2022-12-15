@@ -44,14 +44,17 @@ class JSONFile(pytest.File):
         model: Type[BaseTestModel],
         benchmarker: AutoBenchmarker,
         acceptable_st_devs: int,
+        acceptable_re_runs: int,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.model = model
         self.benchmarker = benchmarker
         self.acceptable_st_devs = acceptable_st_devs
+        self.acceptable_re_runs = acceptable_re_runs
 
     def collect(self):
+        self.add_marker(pytest.mark.flaky(reruns=self.acceptable_re_runs))
         test_model = self.model.parse_file(self.path)
         final_tests = []
         for func_name, test in test_model.tests:
@@ -128,6 +131,7 @@ def pytest_collect_file(parent: pytest.Session, file_path: Path):
             model=auto_benchmarker.test_model,
             benchmarker=auto_benchmarker,
             acceptable_st_devs=pytest_config.acceptable_st_devs,
+            acceptable_re_runs=pytest_config.re_runs,
         )
 
 

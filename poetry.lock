@@ -268,6 +268,18 @@ tomli = {version = ">=1.0.0", markers = "python_version < \"3.11\""}
 testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "xmlschema"]
 
 [[package]]
+name = "pytest-rerunfailures"
+version = "10.3"
+description = "pytest plugin to re-run tests to eliminate flaky failures"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+packaging = ">=17.1"
+pytest = ">=5.3"
+
+[[package]]
 name = "pyyaml"
 version = "6.0"
 description = "YAML parser and emitter for Python"
@@ -319,7 +331,7 @@ testing = ["coverage (>=6.2)", "coverage-enable-subprocess (>=1)", "flaky (>=3.7
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.10,<3.11"
-content-hash = "9ec4b9a460635bf4dcdefe73e1e37ca9cead3e0d4d16514789bc12fe901f5c3f"
+content-hash = "690c967119046fe5a94ee5816d9623761a929f77ee21ee91765211a0e5473dbf"
 
 [metadata.files]
 attrs = []
@@ -346,6 +358,7 @@ pre-commit = []
 pydantic = []
 pyflakes = []
 pytest = []
+pytest-rerunfailures = []
 pyyaml = []
 toml = []
 tomli = []
