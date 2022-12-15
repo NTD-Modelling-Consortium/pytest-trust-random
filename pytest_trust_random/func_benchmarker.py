@@ -53,7 +53,11 @@ def get_test_pairs(
         ones = [1] * no_arrays
         ones[i] = len(array)
         new_arrays.append(np.reshape(array, tuple(ones)))
-    combined_array = np.multiply(*new_arrays)
+    assert len(new_arrays) != 0
+    if len(new_arrays) == 1:
+        combined_array = new_arrays[0]
+    else:
+        combined_array = np.multiply(*new_arrays)
     valid_tests = combined_array < settings.max_product
     coords = valid_tests.nonzero()
     items_for_test = []
@@ -61,6 +65,7 @@ def get_test_pairs(
         item_for_test = spaces[coords[i]]
         items_for_test.append(item_for_test)
     total_product = np.sum(combined_array[valid_tests])
+
     return list(zip(*tuple(items_for_test))), total_product
 
 
