@@ -113,7 +113,6 @@ class FuncBenchmarker(Generic[SettingsModel, FuncReturn]):
         tests: List[BaseOutputData] = []
         headers = [k for k in self.func_setup.parameters.keys()]
         for items in self.test_pairs:
-            print(f"{items=}")
             list_of_stats: List[FuncReturn] = Parallel(
                 n_jobs=cpu_count(), backend="threading"
             )(

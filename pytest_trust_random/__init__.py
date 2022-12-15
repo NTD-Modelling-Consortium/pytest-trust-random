@@ -108,13 +108,12 @@ def pytest_sessionstart(session: pytest.Session):
         raise ValueError("benchmark or pytest_config not found")
     benchmark_path = Path(str(session.startpath) + "/" + pytest_config.benchmark_path)
 
-    # get addoption from collector and generate if specified
-    if not benchmark_path.exists():
-        auto_benchmarker.generate_benchmark()
+    if not benchmark_path.exists() or session.config.option.genbenchmark:
+        auto_benchmarker.generate_benchmark(verbose=True)
     else:
         benchmark_sub_path = Path(str(benchmark_path) + "/" + "benchmark.json")
         if not benchmark_sub_path.exists():
-            auto_benchmarker.generate_benchmark()
+            auto_benchmarker.generate_benchmark(verbose=True)
 
 
 def pytest_collect_file(parent: pytest.Session, file_path: Path):
