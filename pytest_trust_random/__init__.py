@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import Optional, Type
 
 import pytest
-from pydantic import BaseModel
 
 from .auto_benchmarker import (
     AutoBenchmarker,
@@ -10,14 +9,6 @@ from .auto_benchmarker import (
     BaseTestModel,
     PytestConfig,
 )
-
-
-class ExampleSubmodel(BaseModel):
-    pop: int
-
-
-class ExampleModel(BaseModel):
-    tests: list[ExampleSubmodel]
 
 
 class JSONItem(pytest.Item):
