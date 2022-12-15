@@ -75,7 +75,9 @@ class BaseTestDimension(GenericModel, Generic[DataT]):
     maximum: DataT
     steps: int
 
-TestT = TypeVar("TestT", bound = BaseOutputData)
+
+TestT = TypeVar("TestT", bound=BaseOutputData)
+
 
 class BaseTestModel(GenericModel, Generic[TestT]):
     tests: List[TestT]
@@ -96,11 +98,13 @@ def get_test_pairs(
     for k, t in parameters.items():
         setting_item: BaseTestDimension = getattr(settings, k)
         if issubclass(t, int):
-            unrounded_spaces: Union[NDArray[np.int_], NDArray[np.float_], NDArray[Union[np.int_, np.float_]]] = get_exponentially_spaced_steps(
+            unrounded_spaces: Union[
+                NDArray[np.int_], NDArray[np.float_], NDArray[Union[np.int_, np.float_]]
+            ] = get_exponentially_spaced_steps(
                 setting_item.minimum, setting_item.maximum, setting_item.steps
             )
             spaces: Union[NDArray[np.int_], NDArray[np.float_]] = np.round(
-                unrounded_spaces #type:ignore
+                unrounded_spaces  # type:ignore
             )
         else:
             spaces: Union[
@@ -320,7 +324,9 @@ class FuncBenchmarker(Generic[SettingsModel, FuncReturn]):
         headers = [k for k in self.func_setup.parameters.keys()]
         for items in self.test_pairs:
             print(f"{items=}")
-            list_of_stats: List[FuncReturn] = Parallel(n_jobs=cpu_count(), backend='threading')(
+            list_of_stats: List[FuncReturn] = Parallel(
+                n_jobs=cpu_count(), backend="threading"
+            )(
                 delayed(self.func_setup.func)(*items)
                 for _ in range(self.settings.benchmark_iters)
             )
