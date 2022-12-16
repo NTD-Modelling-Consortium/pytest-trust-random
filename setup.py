@@ -6,4 +6,5 @@ setup(
     classifiers=["Framework :: Pytest"],
     version="0.1.0",
     packages=["pytest_trust_random"],
+    install_requires=["pytest>=7.0.0"],
 )
