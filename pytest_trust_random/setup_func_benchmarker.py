@@ -2,9 +2,11 @@ import dis
 import io
 from contextlib import redirect_stdout
 from inspect import signature
-from typing import Callable, Dict, Generic, Optional, Tuple, Type, TypeVar
+from typing import Callable, Generic, Optional, Type, TypeVar
 
 from pydantic import BaseModel, create_model
+
+from pytest_trust_random.utils import read_value_from_input
 
 from .base_models import (
     BaseOutputData,
@@ -12,6 +14,7 @@ from .base_models import (
     BaseTestDimension,
     PytestConfig,
 )
+from .utils import read_value_from_input
 
 
 def snake_to_camel_case(string: str) -> str:
@@ -33,7 +36,7 @@ FuncReturn = TypeVar(
 
 
 class SetupFuncBenchmarker(Generic[FuncReturn]):
-    parameters: Dict[str, type]
+    parameters: dict[str, type]
     func: Callable[..., FuncReturn]
     return_type: FuncReturn
     func_name: str
@@ -72,7 +75,7 @@ class SetupFuncBenchmarker(Generic[FuncReturn]):
         return self.func_info.replace("\n", "")
 
     def _generate_settings_model(self) -> Type[BaseSettingsModel]:
-        attributes: Dict[str, Tuple[type, ellipsis]] = {
+        attributes: dict[str, tuple[type, ellipsis]] = {
             k: (BaseTestDimension[t], ...)  # type:ignore
             for k, t in self.parameters.items()
         }
@@ -87,58 +90,37 @@ class SetupFuncBenchmarker(Generic[FuncReturn]):
         return self._settings_model
 
     def generate_settings_instance(self) -> BaseSettingsModel:
-        model = self.settings_model
-        attr_dict = {}
-        for k, t in self.parameters.items():
-            print(f"Attributes for {k}:")
+        def read_parameter_dimension(k: str, T: type):
             while True:
                 constraints = input(
-                    f"Enter (minimum: {str(t.__name__)}, maximum: {str(t.__name__)}, steps: int): "
+                    f"Enter attributes for `{k}` (minimum: {T.__name__}, maximum: {T.__name__}, steps: int): "
                 )
                 items = constraints.split(",")
                 if len(items) == 3:
                     try:
-                        minimum = t(items[0])
-                        maximum = t(items[1])
-                        steps = int(items[2])
-                        if maximum < minimum:
-                            print("max less than min")
-                            continue
-                        break
+                        return BaseTestDimension[T](  # type:ignore
+                            minimum=T(items[0]),
+                            maximum=T(items[1]),
+                            steps=int(items[2]),
+                        )
                     except ValueError:
-                        print("invalid type")
-                        continue
+                        print("[!] Invalid type or maximum is less than minimum")
                 else:
-                    print("incorrect number of args")
-                    continue
-            attr_dict[k] = BaseTestDimension[t](  # type:ignore
-                minimum=minimum, maximum=maximum, steps=steps
-            )
-        while True:
-            try:
-                max_product_string = input("max_product: float: ")
-                max_product = float(max_product_string)
-                break
-            except ValueError:
-                print("invalid type")
-                continue
-        attr_dict["max_product"] = max_product
+                    print("[!] Incorrect number of args")
 
-        while True:
-            try:
-                benchmark_iters_string = input("benchmark_iters: int: ")
-                benchmark_iters = int(benchmark_iters_string)
-                break
-            except ValueError:
-                print("invalid type")
-                continue
-        attr_dict["benchmark_iters"] = benchmark_iters
+        attrs = {}
+        for k, T in self.parameters.items():
+            attrs[k] = read_parameter_dimension(k, T)
+        attrs["max_product"] = read_value_from_input("max_product", float)
+        attrs["benchmark_iters"] = read_value_from_input("benchmark_iters", int)
 
-        settings = model.parse_obj(attr_dict)
+        print()
+
+        settings = self.settings_model.parse_obj(attrs)
         return settings
 
     def _generate_output_model(self) -> Type[BaseOutputData]:
-        attributes: Dict[str, Tuple[type, ellipsis]] = {
+        attributes: dict[str, tuple[type, ellipsis]] = {
             k: (t, ...) for k, t in self.parameters.items()
         }
         return create_model(

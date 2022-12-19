@@ -2,7 +2,7 @@ from typing import Dict, Generic, List, TypeVar, Union
 
 import numpy as np
 from numpy.typing import NDArray
-from pydantic import BaseModel
+from pydantic import BaseModel, root_validator
 from pydantic.generics import GenericModel
 
 
@@ -42,6 +42,12 @@ class BaseTestDimension(GenericModel, Generic[DataT]):
     maximum: DataT
     steps: int
 
+    @root_validator
+    def check_max_not_greater_than_min(cls, values):
+        if values.get("maximum") < values.get("minimum"):
+            raise ValueError("Minimum is greater than maximum")
+        return values
+
 
 TestT = TypeVar("TestT", bound=BaseOutputData)
 
@@ -54,3 +60,6 @@ class PytestConfig(BaseModel):
     acceptable_st_devs: float
     re_runs: int
     benchmark_path: str
+
+    def __hash__(self) -> int:
+        return hash(self.benchmark_path)
