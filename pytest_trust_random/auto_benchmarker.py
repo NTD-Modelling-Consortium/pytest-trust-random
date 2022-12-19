@@ -27,8 +27,9 @@ Note - eventually make autobenchmarker and funcbenchmarker inherit from benchmar
 
 
 class AutoBenchmarker:
-    def __init__(self, **funcs: Callable) -> None:
-        self.pytest_config = PytestConfig.parse_file("pytest_config.json")
+    def __init__(self, pytest_config: PytestConfig, **funcs: Callable) -> None:
+        assert pytest_config, "No pytest_config!"
+        self.pytest_config = pytest_config
         self.setup_func_benchmarkers = {
             k: SetupFuncBenchmarker(v) for k, v in funcs.items()
         }
@@ -40,7 +41,7 @@ class AutoBenchmarker:
 
     def __str__(self) -> str:
         return ", ".join(
-            [name + str(i) for name, i in self.setup_func_benchmarkers.items()]
+            name + str(i) for name, i in self.setup_func_benchmarkers.items()
         )
 
     def _generate_test_model(self) -> Type[BaseTestModel]:
@@ -141,10 +142,9 @@ class AutoBenchmarker:
             print(f"Benchmark calculated in: {end-start}")
         test_data = self.test_model.parse_obj({"tests": all_benchmarks_out})
 
-        benchmark_file_path = self.settings_folder / "benchmark.json"
-        benchmark_file = open(benchmark_file_path, "w+")
-        json.dump(test_data.dict(), benchmark_file, indent=2)
-        benchmark_file.close()
+        with open(self.settings_folder / "benchmark.json", "w+") as benchmark_file:
+            json.dump(test_data.dict(), benchmark_file, indent=2)
+
         # hash_file_path = Path(str(self.settings_folder) + os.sep + "data_hash.txt")
         # with open(hash_file_path, "w+") as f:
         #    f.write(str(self))
