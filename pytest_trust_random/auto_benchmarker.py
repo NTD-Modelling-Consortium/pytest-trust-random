@@ -2,7 +2,7 @@ import json
 import time
 from multiprocessing import cpu_count
 from pathlib import Path
-from typing import Callable, Dict, List, Type
+from typing import Callable, Type
 
 from pydantic import create_model
 
@@ -46,7 +46,7 @@ class AutoBenchmarker:
 
     def _generate_test_model(self) -> Type[BaseTestModel]:
         output_models_dict = {
-            func_name: (List[setup_func_benchmarker.output_model], ...)  # type:ignore
+            func_name: (list[setup_func_benchmarker.output_model], ...)  # type:ignore
             for func_name, setup_func_benchmarker in self.setup_func_benchmarkers.items()
         }
         return create_model(
@@ -79,7 +79,7 @@ class AutoBenchmarker:
         model = self.settings_model
         model_dict = {}
         for k, v in self.setup_func_benchmarkers.items():
-            print(f"Attributes for function {k}: \n")
+            print(f"Attributes for function {k}:")
             model_dict[k] = v.generate_settings_instance()
 
         settings = model.parse_obj(model_dict)
@@ -98,7 +98,7 @@ class AutoBenchmarker:
         return self._settings
 
     @property
-    def func_benchmarkers(self) -> Dict[str, FuncBenchmarker]:
+    def func_benchmarkers(self) -> dict[str, FuncBenchmarker]:
         if self._func_benchmarkers is None:
             self._func_benchmarkers = {
                 func_name: FuncBenchmarker(
@@ -140,6 +140,7 @@ class AutoBenchmarker:
 
         if verbose:
             print(f"Benchmark calculated in: {end-start}")
+        print()
         test_data = self.test_model.parse_obj({"tests": all_benchmarks_out})
 
         with open(self.settings_folder / "benchmark.json", "w+") as benchmark_file:
