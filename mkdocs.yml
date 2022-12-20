@@ -1,0 +1,12 @@
+site_name: pytest-trust-random
+docs_dir: docs
+
+nav:
+  - Introduction: index.md
+  - reference.md
+
+theme: material
+
+plugins:
+  - search
+  - mkdocstrings

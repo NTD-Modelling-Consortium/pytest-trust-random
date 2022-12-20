@@ -11,6 +11,8 @@ pydantic = "^1.10.2"
 numpy = "^1.23.5"
 joblib = "^1.2.0"
 pytest-rerunfailures = "^10.3"
+mkdocstrings = {extras = ["python"], version = "^0.19.1"}
+mkdocs-material = "^8.5.11"
 
 [tool.poetry.dev-dependencies]
 black = "^22.12.0"
