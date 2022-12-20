@@ -21,16 +21,18 @@ pytest_config_2 = PytestConfig(
 )
 
 
-@benchmark_test(pytest_config_1)
-def tiny_test1(pop: int, other: int) -> Stats:
+def some_function(pop: int, other: int) -> Stats:
     return Stats(pop=pop)
 
 
 @benchmark_test(pytest_config_1)
-def tiny_test2(pop: int, other: int) -> Stats:
+def foo(pop: int) -> Stats:
     return Stats(pop=pop)
+
+
+some_test = benchmark_test(pytest_config_1)(some_function)
 
 
 @benchmark_test(pytest_config_2)
-def tiny_test3(pop: int, other: int) -> Stats:
+def bar(pop: int) -> Stats:
     return Stats(pop=pop)

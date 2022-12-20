@@ -1,4 +1,4 @@
-from typing import Dict, Generic, List, TypeVar, Union
+from typing import Generic, TypeVar
 
 import numpy as np
 from numpy.typing import NDArray
@@ -11,7 +11,7 @@ class BenchmarkArray(BaseModel):
     st_dev: float
 
     @classmethod
-    def from_array(cls, array: Union[NDArray[np.float_], NDArray[np.int_]]):
+    def from_array(cls, array: NDArray[np.float_] | NDArray[np.int_]):
         return cls(mean=float(np.mean(array)), st_dev=float(np.std(array)))
 
 
@@ -31,7 +31,7 @@ class GlobalSettingsModel(BaseModel):
 
 
 class BaseOutputData(BaseModel):
-    data: Dict[str, BenchmarkArray]
+    data: dict[str, BenchmarkArray]
 
 
 DataT = TypeVar("DataT")
@@ -53,7 +53,7 @@ TestT = TypeVar("TestT", bound=BaseOutputData)
 
 
 class BaseTestModel(GenericModel, Generic[TestT]):
-    tests: List[TestT]
+    tests: list[TestT]
 
 
 class PytestConfig(BaseModel):
