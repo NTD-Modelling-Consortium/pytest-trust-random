@@ -13,7 +13,11 @@ from .auto_benchmarker import (
 )
 
 
-# TODO: benchmark.json, benchmark_test_*.py pattern
+FILE_NAME_PATTERN = re.compile(r"benchmark_test_.+.py")
+
+
+def is_auto_benchmarker_test_file(path: Path) -> bool:
+    return re.match(FILE_NAME_PATTERN, path.name) is not None
 
 
 def benchmark_test(pytest_config: PytestConfig):
@@ -58,21 +62,17 @@ class JSONFile(pytest.File):
         self,
         *,
         benchmarkers: Iterator[AutoBenchmarker],
-        benchmark_dir: Callable[[AutoBenchmarker], Path],
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.benchmarkers = benchmarkers
-        self.benchmark_dir = benchmark_dir
 
     def collect(self):
         for benchmarker in self.benchmarkers:
             pytest_config = benchmarker.pytest_config
             model = benchmarker.test_model
 
-            test_model = model.parse_file(
-                self.benchmark_dir(benchmarker) / "benchmark.json"
-            )
+            test_model = model.parse_file(benchmarker.benchmark_file_path)
             for func_name, test in test_model.tests:
                 for i, data in enumerate(test):
                     yield JSONItem.from_parent(
@@ -112,14 +112,13 @@ def get_benchmarkers_from_definition(file_path: Path) -> Iterator[AutoBenchmarke
 
 
 def find_benchmarks(start_path: Path) -> Iterator[AutoBenchmarker]:
-    for f in start_path.glob("benchmark_test_*.py"):
+    for f in filter(is_auto_benchmarker_test_file, start_path.iterdir()):
         yield from get_benchmarkers_from_definition(f)
 
 
 def get_benchmark_dir(start_path: Path, auto_benchmarker: AutoBenchmarker) -> Path:
-    # Use either defined path or a directory of the same name as the
-    # benchmark definition file
     pytest_config = auto_benchmarker.pytest_config
+    # TODO: is this start_path needed?
     return start_path / pytest_config.benchmark_path
 
 
@@ -130,20 +129,18 @@ def pytest_sessionstart(session: pytest.Session):
         if not benchmark_dir.exists() or session.config.option.genbenchmark:
             auto_benchmarker.generate_benchmark(verbose=True)
         else:
-            benchmark_sub_path = benchmark_dir / "benchmark.json"
-            if not benchmark_sub_path.exists():
+            if not auto_benchmarker.benchmark_file_path.exists():
                 auto_benchmarker.generate_benchmark(verbose=True)
 
 
 def pytest_collect_file(parent: pytest.Session, file_path: Path):
-    if re.match(r"benchmark_test_(.+).py", file_path.name):
+    if is_auto_benchmarker_test_file(file_path):
         # TODO: let it through if there's no actual benchmark there - maybe just a similar name
         auto_benchmarkers = get_benchmarkers_from_definition(file_path)
         return JSONFile.from_parent(
             parent,
             path=file_path,
             benchmarkers=auto_benchmarkers,
-            benchmark_dir=lambda b: get_benchmark_dir(parent.startpath, b),
         )
 
 

@@ -111,7 +111,15 @@ class SetupFuncBenchmarker(Generic[FuncReturn]):
         attrs = {}
         for k, T in self.parameters.items():
             attrs[k] = read_parameter_dimension(k, T)
-        attrs["max_product"] = read_value_from_input("max_product", float)
+
+        if len(self.parameters) == 1:
+            # If there's one parameter, use its maximum value
+            dimensions = next(iter(attrs.values()))
+            max_product = dimensions.maximum
+        else:
+            max_product = read_value_from_input("max_product", float)
+        attrs["max_product"] = max_product
+
         attrs["benchmark_iters"] = read_value_from_input("benchmark_iters", int)
 
         print()

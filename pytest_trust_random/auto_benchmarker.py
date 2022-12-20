@@ -45,15 +45,24 @@ class AutoBenchmarker:
         )
 
     def _generate_test_model(self) -> Type[BaseTestModel]:
+        # TODO: why there are ellipis all over the place here?
         output_models_dict = {
-            func_name: (list[setup_func_benchmarker.output_model], ...)  # type:ignore
+            func_name: (list[setup_func_benchmarker.output_model], ...)
             for func_name, setup_func_benchmarker in self.setup_func_benchmarkers.items()
         }
         return create_model(
             "TestData",
             __base__=BaseTestModel,
-            tests=(create_model("FuncData", **output_models_dict), ...),  # type:ignore
+            tests=(create_model("FuncData", **output_models_dict), ...),
         )
+
+    @property
+    def benchmark_file_path(self) -> Path:
+        return self.settings_folder / "benchmark.json"
+
+    @property
+    def settings_path(self) -> Path:
+        return self.settings_folder / "settings.json"
 
     @property
     def test_model(self) -> Type[BaseTestModel]:
@@ -89,12 +98,11 @@ class AutoBenchmarker:
     @property
     def settings(self) -> GlobalSettingsModel:
         if self._settings is None:
-            settings_path = self.settings_folder / "settings.json"
-            if not settings_path.exists():
+            if not self.settings_path.exists():
                 if not self.settings_folder.exists():
                     self.settings_folder.mkdir(parents=True)
-                self._generate_settings_file(settings_path)
-            self._settings = self.settings_model.parse_file(settings_path)
+                self._generate_settings_file(self.settings_path)
+            self._settings = self.settings_model.parse_file(self.settings_path)
         return self._settings
 
     @property
@@ -143,7 +151,7 @@ class AutoBenchmarker:
         print()
         test_data = self.test_model.parse_obj({"tests": all_benchmarks_out})
 
-        with open(self.settings_folder / "benchmark.json", "w+") as benchmark_file:
+        with open(self.benchmark_file_path, "w+") as benchmark_file:
             json.dump(test_data.dict(), benchmark_file, indent=2)
 
         # hash_file_path = Path(str(self.settings_folder) + os.sep + "data_hash.txt")

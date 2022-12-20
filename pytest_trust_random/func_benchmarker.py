@@ -1,6 +1,6 @@
+from collections import defaultdict
 import math
-from multiprocessing import cpu_count
-from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union
+from typing import Any, Generic, TypeVar
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -18,34 +18,24 @@ from .utils import FlatDict, flatten_dict
 
 
 def get_test_pairs(
-    settings: BaseSettingsModel, parameters: Dict[str, type]
-) -> Tuple[List[Tuple], float]:
+    settings: BaseSettingsModel, parameters: dict[str, type]
+) -> tuple[list[tuple], float]:
     def get_exponentially_spaced_steps(
-        start: Union[int, float], end: Union[int, float], n_steps: int
-    ) -> Union[NDArray[np.int_], NDArray[np.float_]]:
+        start: int | float, end: int | float, n_steps: int
+    ) -> NDArray[np.float_]:
         log_start = math.log(start)
         log_end = math.log(end)
         exp_spaced = np.linspace(log_start, log_end, n_steps)
         return np.exp(exp_spaced)
 
-    arrays: List[Union[NDArray[np.int_], NDArray[np.float_]]] = []
+    arrays: list[NDArray[np.int_] | NDArray[np.float_]] = []
     for k, t in parameters.items():
         setting_item: BaseTestDimension = getattr(settings, k)
+        spaces: NDArray[np.float_] | NDArray[np.int_] = get_exponentially_spaced_steps(
+            setting_item.minimum, setting_item.maximum, setting_item.steps
+        )
         if issubclass(t, int):
-            unrounded_spaces: Union[
-                NDArray[np.int_], NDArray[np.float_], NDArray[Union[np.int_, np.float_]]
-            ] = get_exponentially_spaced_steps(
-                setting_item.minimum, setting_item.maximum, setting_item.steps
-            )
-            spaces: Union[NDArray[np.int_], NDArray[np.float_]] = np.round(
-                unrounded_spaces  # type:ignore
-            )
-        else:
-            spaces: Union[
-                NDArray[np.int_], NDArray[np.float_]
-            ] = get_exponentially_spaced_steps(
-                setting_item.minimum, setting_item.maximum, setting_item.steps
-            )
+            spaces = np.round(spaces).astype(int)
         arrays.append(spaces)
     new_arrays = []
     no_arrays = len(arrays)
@@ -66,7 +56,7 @@ def get_test_pairs(
         items_for_test.append(item_for_test)
     total_product = np.sum(combined_array[valid_tests])
 
-    return list(zip(*tuple(items_for_test))), total_product
+    return list(zip(*items_for_test)), total_product
 
 
 SettingsModel = TypeVar("SettingsModel", bound=BaseSettingsModel)
@@ -86,41 +76,36 @@ class FuncBenchmarker(Generic[SettingsModel, FuncReturn]):
     def __len__(self) -> int:
         return len(self.test_pairs)
 
-    def estimate_computation_time(self) -> Tuple[float, float]:
+    def estimate_computation_time(self) -> tuple[float, float]:
         est_test_time = self.func_setup.est_base_time * self.total_product
         est_benchmark_time = est_test_time * self.settings.benchmark_iters
         return est_test_time, est_benchmark_time
 
     def _compute_mean_and_st_dev_of_pydantic(
         self,
-        input_stats: List[FuncReturn],
-    ) -> Dict[str, BenchmarkArray]:
-        flat_dicts: List[FlatDict] = [
+        input_stats: list[FuncReturn],
+    ) -> dict[str, BenchmarkArray]:
+        flat_dicts: list[FlatDict] = [
             flatten_dict(input_stat.dict()) for input_stat in input_stats
         ]
-        dict_of_arrays: Dict[str, List[Any]] = {}
+        dict_of_arrays: dict[str, list[Any]] = defaultdict(list)
         for flat_dict in flat_dicts:
             for k, v in flat_dict.items():
-                if k in dict_of_arrays:
-                    dict_of_arrays[k].append(v)
-                else:
-                    dict_of_arrays[k] = [v]
-        final_dict_of_arrays: Dict[str, NDArray[np.float_]] = {
+                dict_of_arrays[k].append(v)
+        final_dict_of_arrays: dict[str, NDArray[np.float_]] = {
             k: np.array(v) for k, v in dict_of_arrays.items()
         }
         return {
             k: BenchmarkArray.from_array(v) for k, v in final_dict_of_arrays.items()
         }
 
-    def generate_benchmark(self) -> List[BaseOutputData]:
+    def generate_benchmark(self) -> list[BaseOutputData]:
         OutputModel = self.func_setup.output_model
 
-        tests: List[BaseOutputData] = []
+        tests: list[BaseOutputData] = []
         headers = [k for k in self.func_setup.parameters.keys()]
         for items in self.test_pairs:
-            list_of_stats: List[FuncReturn] = Parallel(
-                n_jobs=cpu_count(), backend="threading"
-            )(
+            list_of_stats: list[FuncReturn] = Parallel(n_jobs=-1, backend="threading")(
                 delayed(self.func_setup.func)(*items)
                 for _ in range(self.settings.benchmark_iters)
             )
