@@ -1,3 +1,44 @@
+"""**pytest-trust-rundom** is a pytest plugin. It designed to facilitate regression
+testing of randomised (although not only) functions over the whole spectrum
+of defined parameters.
+
+In order to use it, you must define an object of `PytestConfig` class and then
+use it to create pytest-trust-random tests.
+
+Files with the tests need to match the following pattern: `benchmark_test_*.py`
+For example: benchmark_test_simulation.py
+
+Usage:
+    ```py
+    # tests/benchmark_test_simulation.py
+    from pytest_trust_random import benchmark_test, PytestConfig
+    
+    cfg = PytestConfig(acceptable_st_devs=2.5, re_runs=5, benchmark_path="benchmarks")
+    class Stats:
+        some_output_data: float
+    
+    @benchmark_test
+    def test_simulation_1(a: int, b: float) -> Stats:
+        ...
+        return Stats(...)
+    
+    @benchmark_test
+    def test_simulation_2(a: int, b: float) -> Stats:
+        ...
+        return Stats(...)
+    ```
+    
+    Now, run `pytest -s`. If benchmarks and settings files were not created earlier,
+    the plugin will prompt you (hence `-s` is important) to provide the following:
+    Then it will create a benchmark.json file in the specified `benchmark_path` for all
+    the tests defined.
+
+    The following runs of `pytest` do not require `-s` argument, as they won't prompt
+    for any user input.
+"""
+
+__all__ = ["benchmark_test", "PytestConfig"]
+
 import re
 from collections import defaultdict
 from pathlib import Path
@@ -12,7 +53,6 @@ from .auto_benchmarker import (
     PytestConfig,
 )
 
-
 FILE_NAME_PATTERN = re.compile(r"benchmark_test_.+.py")
 
 
@@ -21,6 +61,22 @@ def is_auto_benchmarker_test_file(path: Path) -> bool:
 
 
 def benchmark_test(pytest_config: PytestConfig):
+    """Decorator for creating benchmark tests from functions.
+
+    The plugin will create tests combination of function parameters.
+    Maximum, minimum, number of steps for each of them as well as maximum
+    product of the parameters will be prompted by the plugin when run for the first time.
+
+    Examples:
+        >>> config = PytestConfig(...)
+        >>> @benchmark_test(config)
+        ... def test_something(a: int, b: float, c: int):
+        ...     ...
+
+    Args:
+        pytest_config (PytestConfig): Test configuration
+    """
+
     def decorator(fn):
         fn.pytest_config = pytest_config
         fn.benchmark_test = True

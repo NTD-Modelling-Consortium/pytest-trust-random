@@ -56,10 +56,30 @@ class BaseTestModel(GenericModel, Generic[TestT]):
     tests: list[TestT]
 
 
+# TODO: rename PytestConfig
+
+
 class PytestConfig(BaseModel):
+    """Parameters specification for a single group of pytest-trust-random tests
+
+    Attributes:
+        acceptable_st_devs (int): Acceptable standard deviation
+        re_runs (int): Maximum number of re-runs before a test is considered failed
+        benchmark_path (str): Relative path of a directory where both settings and
+                              generated benchmark files are stored
+    """
+
     acceptable_st_devs: float
     re_runs: int
     benchmark_path: str
 
     def __hash__(self) -> int:
+        """Hash method -- based on `benchmark_path`
+
+        Used for deferentiating between different PytestConfigs and grouping
+        tests using the same config together.
+
+        Returns:
+            int: hash value
+        """
         return hash(self.benchmark_path)
