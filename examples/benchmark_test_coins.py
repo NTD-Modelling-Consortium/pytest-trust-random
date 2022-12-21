@@ -1,7 +1,7 @@
 import numpy as np
 import pydantic
 
-from pytest_trust_random import benchmark_test, TrustRandomConfig
+from pytest_trust_random import TrustRandomConfig, benchmark_test
 
 
 class CoinTosserStats(pydantic.BaseModel):

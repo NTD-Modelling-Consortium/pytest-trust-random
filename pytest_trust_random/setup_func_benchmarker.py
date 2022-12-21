@@ -28,10 +28,7 @@ def get_func_info(func) -> str:
         return buffer.getvalue()
 
 
-FuncReturn = TypeVar(
-    "FuncReturn",
-    bound=BaseModel,
-)
+FuncReturn = TypeVar("FuncReturn", bound=BaseModel)
 
 
 class SetupFuncBenchmarker(Generic[FuncReturn]):
