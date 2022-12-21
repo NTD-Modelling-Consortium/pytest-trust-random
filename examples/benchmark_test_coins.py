@@ -1,14 +1,14 @@
 import numpy as np
 import pydantic
 
-from pytest_trust_random import benchmark_test, PytestConfig
+from pytest_trust_random import benchmark_test, TrustRandomConfig
 
 
 class CoinTosserStats(pydantic.BaseModel):
     no_of_heads: int
 
 
-config = PytestConfig(
+config = TrustRandomConfig(
     acceptable_st_devs=1.5,
     re_runs=5,
     benchmark_path="benchmarks",

@@ -32,7 +32,7 @@ First, let's import all the required bits
 import numpy as np # needed just for our function
 import pydantic
 
-from pytest_trust_random import benchmark_test, PytestConfig
+from pytest_trust_random import benchmark_test, TrustRandomConfig
 ```
 
 Then, create a return type for the function under test.
@@ -42,10 +42,10 @@ class CoinTosserStats(pydantic.BaseModel):
     no_of_heads: int
 ```
 
-Before we create our function under test, we need an instance of PytestConfig. These are a set of parameters required by **pytest-trust-random**. Please check the [Reference](reference.md) for detailed explanation of the parameters.
+Before we create our function under test, we need an instance of TrustRandomConfig. These are a set of parameters required by **pytest-trust-random**. Please check the [Reference](reference.md) for detailed explanation of the parameters.
 
 ```py
-config = PytestConfig(
+config = TrustRandomConfig(
     acceptable_st_devs=1.5,
     re_runs=5,
     benchmark_path="benchmarks",
@@ -133,7 +133,7 @@ pytest --generatebenchmark
 
 ## Adding more tests
 
-There's nothing preventing us from adding more tests. You can do it either in the same file or another, either with the same `PytestConfig` or with another. If you decide you tests needs a different `PytestConfig`, make sure you use different `benchmark_path` for each of the configs. As an example, we'll add another function to our test file.
+There's nothing preventing us from adding more tests. You can do it either in the same file or another, either with the same `TrustRandomConfig` or with another. If you decide you tests needs a different `TrustRandomConfig`, make sure you use different `benchmark_path` for each of the configs. As an example, we'll add another function to our test file.
 
 ```py
 @benchmark_test(config)

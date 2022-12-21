@@ -10,7 +10,7 @@ from .base_models import (
     BaseOutputData,
     BaseTestModel,
     GlobalSettingsModel,
-    PytestConfig,
+    TrustRandomConfig,
 )
 from .func_benchmarker import FuncBenchmarker
 from .setup_func_benchmarker import SetupFuncBenchmarker
@@ -27,9 +27,11 @@ Note - eventually make autobenchmarker and funcbenchmarker inherit from benchmar
 
 
 class AutoBenchmarker:
-    def __init__(self, pytest_config: PytestConfig, **funcs: Callable) -> None:
-        assert pytest_config, "No pytest_config!"
-        self.pytest_config = pytest_config
+    def __init__(
+        self, trust_random_config: TrustRandomConfig, **funcs: Callable
+    ) -> None:
+        assert trust_random_config, "No trust_random_config!"
+        self.trust_random_config = trust_random_config
         self.setup_func_benchmarkers = {
             k: SetupFuncBenchmarker(v) for k, v in funcs.items()
         }
@@ -37,7 +39,7 @@ class AutoBenchmarker:
         self._settings = None
         self._test_model = None
         self._func_benchmarkers = None
-        self.settings_folder = Path(self.pytest_config.benchmark_path)
+        self.settings_folder = Path(self.trust_random_config.benchmark_path)
 
     def __str__(self) -> str:
         return ", ".join(

@@ -11,7 +11,7 @@ from .base_models import (
     BaseOutputData,
     BaseSettingsModel,
     BaseTestDimension,
-    PytestConfig,
+    TrustRandomConfig,
 )
 from .utils import read_value_from_input
 
@@ -40,13 +40,14 @@ class SetupFuncBenchmarker(Generic[FuncReturn]):
     return_type: FuncReturn
     func_name: str
     camel_name: str
-    pytest_config: PytestConfig
+    trust_random_config: TrustRandomConfig
     _settings_model: Optional[Type[BaseSettingsModel]]
     _output_data: Optional[Type[BaseOutputData]]
 
     def __init__(
         self, func: Callable[..., FuncReturn], est_base_time: float = 0.015
     ) -> None:
+        # TODO: est_base_time is a bit useless, unless we come up with a way to actually estimate it.
         sig = signature(func)
         return_type: FuncReturn = sig.return_annotation
         if not issubclass(
