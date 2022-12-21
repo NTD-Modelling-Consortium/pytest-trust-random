@@ -2,7 +2,7 @@
 plugin. It designed to facilitate regression testing of randomised (although not only)
 functions over the whole spectrum of defined parameters.
 
-In order to use it, you must define an object of `PytestConfig` class and then
+In order to use it, you must define an object of `TrustRandomConfig` class and then
 use it to create pytest-trust-random tests.
 
 Files with the tests need to match the following pattern: `benchmark_test_*.py`
@@ -11,9 +11,14 @@ For example: benchmark_test_simulation.py
 Basic usage:
     ```py
     # tests/benchmark_test_simulation.py
-    from pytest_trust_random import benchmark_test, PytestConfig
+    from pytest_trust_random import benchmark_test, TrustRandomConfig
     
-    cfg = PytestConfig(acceptable_st_devs=2.5, re_runs=5, benchmark_path="benchmarks")
+    cfg = TrustRandomConfig(
+        acceptable_st_devs=2.5,
+        re_runs=5,
+        benchmark_path="benchmarks"
+    )
+
     class Stats:
         some_output_data: float
     
@@ -37,7 +42,7 @@ Basic usage:
     for any user input.
 """
 
-__all__ = ["benchmark_test", "PytestConfig"]
+__all__ = ["benchmark_test", "TrustRandomConfig"]
 
 import re
 from collections import defaultdict
@@ -50,7 +55,7 @@ from .auto_benchmarker import (
     AutoBenchmarker,
     BaseOutputData,
     BaseTestModel,
-    PytestConfig,
+    TrustRandomConfig,
 )
 
 FILE_NAME_PATTERN = re.compile(r"benchmark_test_.+.py")
@@ -60,7 +65,7 @@ def is_auto_benchmarker_test_file(path: Path) -> bool:
     return re.match(FILE_NAME_PATTERN, path.name) is not None
 
 
-def benchmark_test(pytest_config: PytestConfig):
+def benchmark_test(trust_random_config: TrustRandomConfig):
     """Decorator for creating benchmark tests from functions.
 
     The plugin will create tests combination of function parameters.
@@ -68,17 +73,17 @@ def benchmark_test(pytest_config: PytestConfig):
     product of the parameters will be prompted by the plugin when run for the first time.
 
     Examples:
-        >>> config = PytestConfig(...)
+        >>> config = TrustRandomConfig(...)
         >>> @benchmark_test(config)
         ... def test_something(a: int, b: float, c: int):
         ...     ...
 
     Args:
-        pytest_config (PytestConfig): Test configuration
+        trust_random_config (TrustRandomConfig): Test configuration
     """
 
     def decorator(fn):
-        fn.pytest_config = pytest_config
+        fn.trust_random_config = trust_random_config
         fn.benchmark_test = True
         return fn
 
@@ -125,7 +130,7 @@ class JSONFile(pytest.File):
 
     def collect(self):
         for benchmarker in self.benchmarkers:
-            pytest_config = benchmarker.pytest_config
+            trust_random_config = benchmarker.trust_random_config
             model = benchmarker.test_model
 
             test_model = model.parse_file(benchmarker.benchmark_file_path)
@@ -137,8 +142,8 @@ class JSONFile(pytest.File):
                         func_name=func_name,
                         data=data,
                         benchmarker=benchmarker,
-                        acceptable_st_devs=pytest_config.acceptable_st_devs,
-                        acceptable_re_runs=pytest_config.re_runs,
+                        acceptable_st_devs=trust_random_config.acceptable_st_devs,
+                        acceptable_re_runs=trust_random_config.re_runs,
                     )
 
 
@@ -157,14 +162,16 @@ def get_benchmarkers_from_definition(file_path: Path) -> Iterator[AutoBenchmarke
     def is_benchmark_test(fn):
         return isfunction(fn) and getattr(fn, "benchmark_test", False)
 
-    config_and_funcs: defaultdict[PytestConfig, dict[str, Callable]] = defaultdict(dict)
+    config_and_funcs: defaultdict[TrustRandomConfig, dict[str, Callable]] = defaultdict(
+        dict
+    )
     for func_name, func in getmembers(autobench, is_benchmark_test):
-        pytest_config = func.pytest_config
-        config_and_funcs[pytest_config][func_name] = func
+        trust_random_config = func.trust_random_config
+        config_and_funcs[trust_random_config][func_name] = func
     assert config_and_funcs, "No benchmark test functions found!"
 
-    for pytest_config, funcs in config_and_funcs.items():
-        yield AutoBenchmarker(pytest_config, **funcs)
+    for trust_random_config, funcs in config_and_funcs.items():
+        yield AutoBenchmarker(trust_random_config, **funcs)
 
 
 def find_benchmarks(start_path: Path) -> Iterator[AutoBenchmarker]:
@@ -173,9 +180,9 @@ def find_benchmarks(start_path: Path) -> Iterator[AutoBenchmarker]:
 
 
 def get_benchmark_dir(start_path: Path, auto_benchmarker: AutoBenchmarker) -> Path:
-    pytest_config = auto_benchmarker.pytest_config
+    trust_random_config = auto_benchmarker.trust_random_config
     # TODO: is this start_path needed?
-    return start_path / pytest_config.benchmark_path
+    return start_path / trust_random_config.benchmark_path
 
 
 def pytest_sessionstart(session: pytest.Session):
@@ -191,7 +198,6 @@ def pytest_sessionstart(session: pytest.Session):
 
 def pytest_collect_file(parent: pytest.Session, file_path: Path):
     if is_auto_benchmarker_test_file(file_path):
-        # TODO: let it through if there's no actual benchmark there - maybe just a similar name
         auto_benchmarkers = get_benchmarkers_from_definition(file_path)
         return JSONFile.from_parent(
             parent,

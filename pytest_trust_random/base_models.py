@@ -56,10 +56,7 @@ class BaseTestModel(GenericModel, Generic[TestT]):
     tests: list[TestT]
 
 
-# TODO: rename PytestConfig
-
-
-class PytestConfig(BaseModel):
+class TrustRandomConfig(BaseModel):
     """Parameters specification for a single group of pytest-trust-random tests
 
     Attributes:
@@ -76,7 +73,7 @@ class PytestConfig(BaseModel):
     def __hash__(self) -> int:
         """Hash method -- based on `benchmark_path`
 
-        Used for deferentiating between different PytestConfigs and grouping
+        Used for deferentiating between different TrustRandomConfigs and grouping
         tests using the same config together.
 
         Returns:
