@@ -3,6 +3,7 @@ docs_dir: docs
 
 nav:
   - Introduction: index.md
+  - usage.md
   - reference.md
 
 theme: material
@@ -10,3 +11,10 @@ theme: material
 plugins:
   - search
   - mkdocstrings
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences

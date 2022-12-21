@@ -1,6 +1,5 @@
 import dis
 import io
-from contextlib import redirect_stdout
 from inspect import signature
 from typing import Callable, Generic, Optional, Type, TypeVar
 
@@ -24,9 +23,9 @@ def snake_to_camel_case(string: str) -> str:
 
 
 def get_func_info(func) -> str:
-    with redirect_stdout(io.StringIO()) as f:
-        dis.dis(func)
-    return f.getvalue()
+    with io.StringIO() as buffer:
+        dis.dis(func, file=buffer)
+        return buffer.getvalue()
 
 
 FuncReturn = TypeVar(
@@ -113,7 +112,7 @@ class SetupFuncBenchmarker(Generic[FuncReturn]):
             attrs[k] = read_parameter_dimension(k, T)
 
         if len(self.parameters) == 1:
-            # If there's one parameter, use its maximum value
+            # If there's only one parameter, use its maximum value
             dimensions = next(iter(attrs.values()))
             max_product = dimensions.maximum
         else:

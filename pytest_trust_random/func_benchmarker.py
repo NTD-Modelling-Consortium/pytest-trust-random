@@ -23,10 +23,9 @@ def get_test_pairs(
     def get_exponentially_spaced_steps(
         start: int | float, end: int | float, n_steps: int
     ) -> NDArray[np.float_]:
-        log_start = math.log(start)
-        log_end = math.log(end)
-        exp_spaced = np.linspace(log_start, log_end, n_steps)
-        return np.exp(exp_spaced)
+        # TODO: do something else if start == 0. For example 0..1 could be scalled linearly?
+        assert 0 < start < end
+        return np.geomspace(start, end, n_steps)
 
     arrays: list[NDArray[np.int_] | NDArray[np.float_]] = []
     for k, t in parameters.items():
@@ -43,12 +42,15 @@ def get_test_pairs(
         ones = [1] * no_arrays
         ones[i] = len(array)
         new_arrays.append(np.reshape(array, tuple(ones)))
+
+    # TODO: we should probably remove this constraint. It would be good to be
+    # able to test functions without any parameters.
     assert len(new_arrays) != 0
     if len(new_arrays) == 1:
         combined_array = new_arrays[0]
     else:
         combined_array = np.multiply(*new_arrays)
-    valid_tests = combined_array < settings.max_product
+    valid_tests = combined_array <= settings.max_product
     coords = valid_tests.nonzero()
     items_for_test = []
     for i, spaces in enumerate(arrays):
