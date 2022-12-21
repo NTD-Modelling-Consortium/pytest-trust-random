@@ -1,5 +1,4 @@
 from collections import defaultdict
-import math
 from typing import Any, Generic, TypeVar
 
 import numpy as np
