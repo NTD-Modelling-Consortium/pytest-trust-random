@@ -1,6 +1,6 @@
-"""**pytest-trust-rundom** is a pytest plugin. It designed to facilitate regression
-testing of randomised (although not only) functions over the whole spectrum
-of defined parameters.
+"""**pytest-trust-rundom** is a [pytest](https://docs.pytest.org/en/latest/contents.html)
+plugin. It designed to facilitate regression testing of randomised (although not only)
+functions over the whole spectrum of defined parameters.
 
 In order to use it, you must define an object of `PytestConfig` class and then
 use it to create pytest-trust-random tests.
@@ -8,7 +8,7 @@ use it to create pytest-trust-random tests.
 Files with the tests need to match the following pattern: `benchmark_test_*.py`
 For example: benchmark_test_simulation.py
 
-Usage:
+Basic usage:
     ```py
     # tests/benchmark_test_simulation.py
     from pytest_trust_random import benchmark_test, PytestConfig
