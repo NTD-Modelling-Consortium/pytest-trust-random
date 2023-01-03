@@ -22,12 +22,12 @@ Basic usage:
     class Stats:
         some_output_data: float
     
-    @benchmark_test
+    @benchmark_test(cfg)
     def test_simulation_1(a: int, b: float) -> Stats:
         ...
         return Stats(...)
     
-    @benchmark_test
+    @benchmark_test(cfg)
     def test_simulation_2(a: int, b: float) -> Stats:
         ...
         return Stats(...)

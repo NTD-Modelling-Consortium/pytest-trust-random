@@ -47,10 +47,9 @@ class SetupFuncBenchmarker(Generic[FuncReturn]):
         # TODO: est_base_time is a bit useless, unless we come up with a way to actually estimate it.
         sig = signature(func)
         return_type: FuncReturn = sig.return_annotation
-        if not issubclass(
-            return_type, BaseModel  # type:ignore BaseModel incompatible with *?
-        ):
-            raise ValueError("Function return must inherit from BaseModel")
+        assert not issubclass(
+            return_type, BaseModel  # type: ignore
+        ), "Function return must inherit from BaseModel"
         parameters = {v.name: v.annotation for _, v in sig.parameters.items()}
         self.parameters = parameters
         self.func = func
