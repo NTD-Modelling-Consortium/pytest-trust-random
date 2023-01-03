@@ -73,7 +73,7 @@ class TrustRandomConfig(BaseModel):
     def __hash__(self) -> int:
         """Hash method -- based on `benchmark_path`
 
-        Used for deferentiating between different TrustRandomConfigs and grouping
+        Used for differentiating between different TrustRandomConfigs and grouping
         tests using the same config together.
 
         Returns:
