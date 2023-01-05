@@ -1,1 +1,1 @@
-# pytest-trust-random
+docs/usage.md
