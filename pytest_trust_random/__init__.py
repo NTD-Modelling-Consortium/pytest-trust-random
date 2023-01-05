@@ -45,7 +45,10 @@ Basic usage:
 __all__ = ["benchmark_test", "TrustRandomConfig"]
 
 import re
+import sys
 from collections import defaultdict
+from importlib.util import module_from_spec, spec_from_file_location
+from inspect import getmembers, isfunction
 from pathlib import Path
 from typing import Callable, Iterator, Type
 
@@ -148,13 +151,9 @@ class JSONFile(pytest.File):
 
 
 def get_benchmarkers_from_definition(file_path: Path) -> Iterator[AutoBenchmarker]:
-    import importlib.util
-    import sys
-    from inspect import getmembers, isfunction
-
-    spec = importlib.util.spec_from_file_location("autobenchmarker", file_path)
+    spec = spec_from_file_location("autobenchmarker", file_path)
     assert spec is not None
-    autobench = importlib.util.module_from_spec(spec)
+    autobench = module_from_spec(spec)
     sys.modules["autobenchmarker"] = autobench
     assert spec.loader is not None
     spec.loader.exec_module(autobench)
