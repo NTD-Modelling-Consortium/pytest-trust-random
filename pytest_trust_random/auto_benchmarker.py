@@ -47,7 +47,6 @@ class AutoBenchmarker:
         )
 
     def _generate_test_model(self) -> Type[BaseTestModel]:
-        # TODO: why there are ellipis all over the place here?
         output_models_dict = {
             func_name: (list[setup_func_benchmarker.output_model], ...)
             for func_name, setup_func_benchmarker in self.setup_func_benchmarkers.items()
