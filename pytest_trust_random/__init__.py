@@ -250,7 +250,6 @@ def calc_failure_prob(
     st_devs = acceptable_st_devs
     re_runs = re_runs
     independent_variables = independent_variables
-    n_tests = 44
     st_dev_prob = NormalDist().cdf(-st_devs)
     success_prob = 1 - st_dev_prob * 2
     prob_of_one_test_fail = 1 - success_prob**independent_variables
