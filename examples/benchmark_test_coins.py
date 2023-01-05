@@ -11,7 +11,7 @@ class CoinTosserStats(pydantic.BaseModel):
 config = TrustRandomConfig(
     acceptable_st_devs=1.5,
     re_runs=5,
-    benchmark_path="benchmarks",
+    benchmark_path="benchmark",
 )
 
 
