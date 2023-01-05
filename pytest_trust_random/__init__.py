@@ -42,11 +42,17 @@ Basic usage:
     for any user input.
 """
 
-__all__ = ["benchmark_test", "TrustRandomConfig", "calc_failure_prob"]
+__all__ = [
+    "benchmark_test",
+    "TrustRandomConfig",
+    "calc_failure_prob",
+    "FailureProbabilities",
+]
 
 import re
 import sys
 from collections import defaultdict
+from dataclasses import dataclass
 from importlib.util import module_from_spec, spec_from_file_location
 from inspect import getmembers, isfunction
 from pathlib import Path
@@ -215,9 +221,21 @@ def pytest_addoption(parser):
     )
 
 
+@dataclass
+class FailureProbabilities:
+    per_test_no_reruns: float
+    per_test_reruns: float
+    one_test_from_all_no_reruns: float
+    one_test_from_all_reruns: float
+
+
 def calc_failure_prob(
-    acceptable_st_devs: float, re_runs: int, independent_variables: int, n_tests: int
-):
+    acceptable_st_devs: float,
+    re_runs: int,
+    independent_variables: int,
+    n_tests: int,
+    verbose: bool = True,
+) -> FailureProbabilities:
     """
     Calculates and prints the probability of failure on any particular run of the
     test suite.
@@ -244,14 +262,22 @@ def calc_failure_prob(
     prob_of_one_of_all_tests_failing_reruns = (
         1 - (1 - prob_of_failing_all_re_runs) ** n_tests
     )
-
-    print("Fail probability per test (assuming no reruns): ", prob_of_one_test_fail)
-    print("Fail probability per test (assuming reruns): ", prob_of_failing_all_re_runs)
-    print(
-        "Probability of one test failing: (assuming no reruns)",
-        prob_of_one_of_all_tests_failing,
-    )
-    print(
-        "Probability of one test failing: (assuming reruns)",
-        prob_of_one_of_all_tests_failing_reruns,
+    if verbose:
+        print("Fail probability per test (assuming no reruns): ", prob_of_one_test_fail)
+        print(
+            "Fail probability per test (assuming reruns): ", prob_of_failing_all_re_runs
+        )
+        print(
+            "Probability of one test failing: (assuming no reruns)",
+            prob_of_one_of_all_tests_failing,
+        )
+        print(
+            "Probability of one test failing: (assuming reruns)",
+            prob_of_one_of_all_tests_failing_reruns,
+        )
+    return FailureProbabilities(
+        per_test_no_reruns=prob_of_one_test_fail,
+        per_test_reruns=prob_of_failing_all_re_runs,
+        one_test_from_all_no_reruns=prob_of_one_of_all_tests_failing,
+        one_test_from_all_reruns=prob_of_one_of_all_tests_failing_reruns,
     )
